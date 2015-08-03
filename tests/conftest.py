@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-
+from six.moves.urllib.parse import urlparse
+# from urlparse import urlparse
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 import json
 import os
-import uuid
 
 import pymysql
 import pytest
-import redis
-
-from meepo._compat import urlparse
 
 
 @pytest.fixture(scope="session")

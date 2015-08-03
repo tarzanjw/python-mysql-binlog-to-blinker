@@ -3,8 +3,11 @@
 from __future__ import absolute_import
 
 import logging
-from urlparse import urlparse
-from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
+from six.moves.urllib.parse import urlparse
+from pymysqlreplication.row_event import \
+    WriteRowsEvent, \
+    UpdateRowsEvent, \
+    DeleteRowsEvent
 from pymysqlblinker import signals, pub
 
 logging.basicConfig(level=logging.DEBUG)

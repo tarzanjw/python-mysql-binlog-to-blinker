@@ -7,14 +7,13 @@ from setuptools import setup
 install_requires = [
     "mysql-replication>=0.7",
     "blinker>=1.4",
+    'six',
 ]
 
-dev_requires = [
-    "flake8>=2.2",
-    "pytest",
-    "tox",
-] + install_requires
-
+dev_requires = ["flake8>=2.2",
+                "pytest",
+                "tox",
+                ] + install_requires
 
 setup(name="pymysqlblinker",
       version=__import__("pymysqlblinker").__version__,
@@ -40,4 +39,4 @@ setup(name="pymysqlblinker",
           "Programming Language :: Python :: 3.3",
           "Programming Language :: Python :: 3.4",
       ]
-)
+      )

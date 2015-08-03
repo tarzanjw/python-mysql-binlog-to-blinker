@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from pymysqlblinker import pub, signals
-import datetime
+
 
 def setup_logging(level=None):
     import logging.config

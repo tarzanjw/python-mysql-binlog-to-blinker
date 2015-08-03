@@ -1,6 +1,8 @@
 Python MySQL Replication Blinker
 ================================
 
+> Underconstruction 
+
 This package uses [mysql-replication](https://github.com/noplay/python-mysql-replication) to read
 events from MySQL binlog and send to blinker's signal.
 
