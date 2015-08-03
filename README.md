@@ -1,6 +1,8 @@
 Python MySQL Replication Blinker
 ================================
 
+    Test travis-ci build
+
 > Underconstruction 
 
 This package uses [mysql-replication](https://github.com/noplay/python-mysql-replication) to read
