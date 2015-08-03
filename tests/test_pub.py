@@ -46,7 +46,7 @@ def binlog(mysql_dsn):
         "port": parsed.port or 3306,
         "user": parsed.username,
         "passwd": parsed.password,
-        "database": "meepo_test"
+        "database": "testdb"
     }
     conn = pymysql.connect(**db_settings)
     cursor = conn.cursor()
