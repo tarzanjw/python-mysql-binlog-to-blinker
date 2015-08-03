@@ -5,7 +5,6 @@ services:
 env:
   - TOXENV=flake8
   - TOXENV=py27
-  - TOXENV=py33
   - TOXENV=py34
 before_install:
   - pip install tox
