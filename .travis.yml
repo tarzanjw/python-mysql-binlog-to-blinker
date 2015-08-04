@@ -3,7 +3,6 @@ python: 3.4
 services:
   - mysql
 env:
-  - TOXENV=flake8
   - TOXENV=py27
   - TOXENV=py34
 before_install:
