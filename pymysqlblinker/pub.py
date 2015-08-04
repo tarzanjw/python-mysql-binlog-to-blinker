@@ -2,7 +2,7 @@
 import logging
 import random
 from six.moves.urllib.parse import urlparse
-import datetime
+import six
 import pymysqlreplication
 from pymysqlreplication.row_event import (
     RowsEvent,
@@ -14,6 +14,50 @@ from . import signals
 
 __author__ = 'tarzan'
 _logger = logging.getLogger(__name__)
+
+
+def send_signals_for_event(event):
+    """ Send signals that is corresponding binlog event
+    :param RowsEvent event: the binlog event
+    """
+    # do not know why the guys put this code here
+    try:
+        rows = event.rows
+    except (UnicodeDecodeError, ValueError) as e:
+        _logger.exception(e)
+        return
+
+    schema = event.schema
+    table = event.table
+    if isinstance(event, WriteRowsEvent):
+        binlog_sig = signals.binlog_write(schema, table)
+        rows_sig = signals.rows_write(schema, table)
+        row_sig = signals.row_write(schema, table)
+    elif isinstance(event, UpdateRowsEvent):
+        binlog_sig = signals.binlog_update(schema, table)
+        rows_sig = signals.rows_update(schema, table)
+        row_sig = signals.row_update(schema, table)
+    elif isinstance(event, DeleteRowsEvent):
+        binlog_sig = signals.binlog_delete(schema, table)
+        rows_sig = signals.rows_delete(schema, table)
+        row_sig = signals.row_delete(schema, table)
+    else:
+        _logger.critical('Unknown event class "%s"' %
+                         event.__class__.__name__)
+        return
+
+    # send binglog signal
+    _logger.debug('Send binlog signal "%s"' % binlog_sig.name)
+    binlog_sig.send(event)
+
+    # send rows signal
+    _logger.debug('Send rows signal "%s"' % rows_sig.name)
+    rows_sig.send(rows)
+
+    # send row signals
+    for row in rows:
+        _logger.debug('Send row signal "%s"' % (row_sig.name))
+        row_sig.send(row)
 
 
 def start_publishing(mysql_dsn, **kwargs):
@@ -45,42 +89,5 @@ def start_publishing(mysql_dsn, **kwargs):
         if not isinstance(event, RowsEvent):
             continue
 
-        timestamp = datetime.datetime.fromtimestamp(event.timestamp)
-        # _logger.debug('Got event %s(%s, %s) at %s'
-        #               % (event.__class__.__name__, event.schema,
-        #                  event.table, timestamp))
-        # do not know why the guys put this code here
-        try:
-            rows = event.rows
-        except (UnicodeDecodeError, ValueError) as e:
-            _logger.exception(e)
-            continue
-
-        if isinstance(event, WriteRowsEvent):
-            action_signal = signals.write
-        elif isinstance(event, UpdateRowsEvent):
-            action_signal = signals.update
-        elif isinstance(event, DeleteRowsEvent):
-            action_signal = signals.delete
-        else:
-            _logger.critical('Unknown event class "%s"' %
-                             event.__class__.__name__)
-            continue
-
-        schema_signal = action_signal.__getattr__(event.schema)
-        table_signal = schema_signal.__getattr__(event.table)
-        row_signal = table_signal.row
-
-        _logger.debug('Send event "%s" at %s' %
-                      (schema_signal.name, timestamp))
-        schema_signal.send(event)
-
-        _logger.debug('Send event "%s" at %s' % (table_signal.name, timestamp))
-        table_signal.send(event)
-
-        for row in rows:
-            _logger.debug('Send event "%s" at %s' %
-                          (row_signal.name, timestamp))
-            row_signal.send(row)
-
+        send_signals_for_event(event)
         signals.binlog_pos_signal.send((stream.log_file, stream.log_pos))

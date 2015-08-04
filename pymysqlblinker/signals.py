@@ -3,67 +3,156 @@ import blinker
 
 __author__ = 'tarzan'
 
-_signals = {}
+_signal_namespace = blinker.Namespace()
+
+binlog_pos_signal = _signal_namespace.signal('mysql_binlog_pos')
 
 
-def signal(name, doc=None):
-    """Return the :class:`NamedSignal` *name*, creating it if required.
+def _signal(action, schema, table, suffix=None):
+    """ Get the signal for *action* on *schema.table* at *suffix*
+    :rtype: blinker.NamedSignal
 
-    Repeated calls to this function will return the same signal object.
+    >>> _signal('action', 'db0', None).name
+    'action@db0'
+    >>> _signal('action', 'db1', 'tbl12').name
+    'action@db1.tbl12'
+    >>> _signal('action', 'db1', 'tbl12', 'suffix').name
+    'action@db1.tbl12#suffix'
+    >>> _signal('action', 'db', None, 'suffix')
+    Traceback (most recent call last):
+     ...
+    AssertionError: Can not provide suffix when table is empty
     """
-    global _signals
-    try:
-        return _signals[name]
-    except KeyError:
-        return _signals.setdefault(name, NamedSignal(name, doc))
+    assert table or not suffix, 'Can not provide suffix when table is empty'
+    sig_name = '%s@%s' % (action, schema)
+    if table:
+        sig_name = sig_name + '.' + table
+        if suffix:
+            sig_name = sig_name + '#' + suffix
+    return _signal_namespace.signal(sig_name)
 
 
-class NamedSignal(blinker.NamedSignal):
-
-    def __init__(self, name, doc=None):
-        super(NamedSignal, self).__init__(name, doc)
-        self.__sub_signals__ = {}
-
-    def __get_next_signal__(self, name):
-        if name in self.__sub_signals__:
-            return self.__sub_signals__[name]
-
-        if '@' not in self.name:
-            sig_name = self.name + '@' + name
-        elif '.' not in self.name:
-            sig_name = self.name + '.' + name
-        else:
-            assert name == 'row', 'After table, onle "row" is allowed'
-            sig_name = self.name + '#row'
-        return self.__sub_signals__.setdefault(
-            name,
-            signal(sig_name, '%s signal' % sig_name)
-        )
-
-    def __getattr__(self, item):
-        """
-        Call :method:`__get_next_signal__` to get returned value If the attr
-        *item* does not exist
-        """
-        return self.__dict__.setdefault(item, self.__get_next_signal__(item))
-
-    def __getitem__(self, item):
-        """
-        Call :method:`__get_next_signal__` to get returned value If the attr
-        *item* does not exist
-
-        >>> a = NamedSignal('action')
-        >>> a['test_database'].name
-        'action@test_database'
-        >>> a['db0']['tbl1'].name
-        'action@db0.tbl1'
-        >>> a['db1']['tbl2']['row'].name
-        'action@db1.tbl2#row'
-        """
-        return self.__get_next_signal__(item)
+def binlog_write(schema, table):
+    """ Get the signal for binlog write on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('write', schema, table)
 
 
-binlog_pos_signal = signal('mysql_binlog_pos')
-write = signal('write')
-update = signal('update')
-delete = signal('delete')
+def binlog_update(schema, table):
+    """ Get the signal for binlog update on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('update', schema, table)
+
+
+def binlog_delete(schema, table):
+    """ Get the signal for binlog delete on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('delete', schema, table)
+
+
+def rows_write(schema, table):
+    """ Get the signal for rows write on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('write', schema, table, 'rows')
+
+
+def rows_update(schema, table):
+    """ Get the signal for rows update on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('update', schema, table, 'rows')
+
+
+def rows_delete(schema, table):
+    """ Get the signal for rows delete on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('delete', schema, table, 'rows')
+
+
+def row_write(schema, table):
+    """ Get the signal for single row write on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('write', schema, table, 'row')
+
+
+def row_update(schema, table):
+    """ Get the signal for single row update on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('update', schema, table, 'row')
+
+
+def row_delete(schema, table):
+    """ Get the signal for single row delete on schema.table
+    :rtype: blinker.NamedSignal
+    """
+    return _signal('delete', schema, table, 'row')
+
+
+def on_binlog_write(schema, table):
+    """ Decorator, wrapper for binlog_write(schema, table).connect
+    :return: Function as decorator
+    """
+    return binlog_write(schema, table).connect
+
+
+def on_binlog_update(schema, table):
+    """ Decorator, wrapper for binlog_update(schema, table).connect
+    :return: Function as decorator
+    """
+    return binlog_update(schema, table).connect
+
+
+def on_binlog_delete(schema, table):
+    """ Decorator, wrapper for binlog_delete(schema, table).connect
+    :return: Function as decorator
+    """
+    return binlog_delete(schema, table).connect
+
+
+def on_rows_write(schema, table):
+    """ Decorator, wrapper for rows_write(schema, table).connect
+    :return: Function as decorator
+    """
+    return rows_write(schema, table).connect
+
+
+def on_rows_update(schema, table):
+    """ Decorator, wrapper for rows_update(schema, table).connect
+    :return: Function as decorator
+    """
+    return rows_update(schema, table).connect
+
+
+def on_rows_delete(schema, table):
+    """ Decorator, wrapper for rows_delete(schema, table).connect
+    :return: Function as decorator
+    """
+    return rows_delete(schema, table).connect
+
+
+def on_row_write(schema, table):
+    """ Decorator, wrapper for row_write(schema, table).connect
+    :return: Function as decorator
+    """
+    return row_write(schema, table).connect
+
+
+def on_row_update(schema, table):
+    """ Decorator, wrapper for row_update(schema, table).connect
+    :return: Function as decorator
+    """
+    return row_update(schema, table).connect
+
+
+def on_row_delete(schema, table):
+    """ Decorator, wrapper for row_delete(schema, table).connect
+    :return: Function as decorator
+    """
+    return row_delete(schema, table).connect

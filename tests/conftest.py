@@ -54,6 +54,13 @@ def mysql_dsn(conf):
                         data VARCHAR (256) NOT NULL,
                         PRIMARY KEY (id)
                    )''')
+    cursor.execute("DROP TABLE IF EXISTS testdb.tbl1")
+    cursor.execute('''CREATE TABLE testdb.tbl1 (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        slug VARCHAR (32) NOT NULL,
+                        data VARCHAR (256) NOT NULL,
+                        PRIMARY KEY (id, slug)
+                   )''')
     cursor.execute("RESET MASTER")
     conn.commit()
 
