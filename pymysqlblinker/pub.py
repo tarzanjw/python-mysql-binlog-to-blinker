@@ -2,7 +2,6 @@
 import logging
 import random
 from six.moves.urllib.parse import urlparse
-import six
 import pymysqlreplication
 from pymysqlreplication.row_event import (
     RowsEvent,

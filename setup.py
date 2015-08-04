@@ -10,8 +10,7 @@ install_requires = [
     'six',
 ]
 
-dev_requires = ["flake8>=2.2",
-                "pytest",
+dev_requires = ["pytest",
                 "tox",
                 ] + install_requires
 

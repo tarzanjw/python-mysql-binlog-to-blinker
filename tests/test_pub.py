@@ -26,19 +26,28 @@ def setup_module(module):
         return lambda pk: sg_list.append(pk)
 
     # connect binlog event signals
-    signals.binlog_write('testdb', 'tbl0').connect(test_sg(t_writes), weak=False)
-    signals.binlog_update('testdb', 'tbl0').connect(test_sg(t_updates), weak=False)
-    signals.binlog_delete('testdb', 'tbl0').connect(test_sg(t_deletes), weak=False)
+    signals.binlog_write('testdb', 'tbl0').\
+        connect(test_sg(t_writes), weak=False)
+    signals.binlog_update('testdb', 'tbl0').\
+        connect(test_sg(t_updates), weak=False)
+    signals.binlog_delete('testdb', 'tbl0').\
+        connect(test_sg(t_deletes), weak=False)
 
     # connect rows signal
-    signals.rows_write('testdb', 'tbl0').connect(test_sg(t_rows_writes), weak=False)
-    signals.rows_update('testdb', 'tbl0').connect(test_sg(t_rows_updates), weak=False)
-    signals.rows_delete('testdb', 'tbl0').connect(test_sg(t_rows_deletes), weak=False)
+    signals.rows_write('testdb', 'tbl0').\
+        connect(test_sg(t_rows_writes), weak=False)
+    signals.rows_update('testdb', 'tbl0').\
+        connect(test_sg(t_rows_updates), weak=False)
+    signals.rows_delete('testdb', 'tbl0').\
+        connect(test_sg(t_rows_deletes), weak=False)
 
     # connect row signal
-    signals.row_write('testdb', 'tbl0').connect(test_sg(t_row_writes), weak=False)
-    signals.row_update('testdb', 'tbl0').connect(test_sg(t_row_updates), weak=False)
-    signals.row_delete('testdb', 'tbl0').connect(test_sg(t_row_deletes), weak=False)
+    signals.row_write('testdb', 'tbl0').\
+        connect(test_sg(t_row_writes), weak=False)
+    signals.row_update('testdb', 'tbl0').\
+        connect(test_sg(t_row_updates), weak=False)
+    signals.row_delete('testdb', 'tbl0').\
+        connect(test_sg(t_row_deletes), weak=False)
 
     # connect mysql binlog pos signal
     signals.binlog_pos_signal.connect(test_sg(t_binlogs),  weak=False)
