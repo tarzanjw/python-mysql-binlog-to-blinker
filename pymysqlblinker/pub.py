@@ -20,43 +20,50 @@ def send_signals_for_event(event):
     :param RowsEvent event: the binlog event
     """
     # do not know why the guys put this code here
-    try:
-        rows = event.rows
-    except (UnicodeDecodeError, ValueError) as e:
-        _logger.exception(e)
-        return
-
     schema = event.schema
     table = event.table
     if isinstance(event, WriteRowsEvent):
-        binlog_sig = signals.binlog_write(schema, table)
-        rows_sig = signals.rows_write(schema, table)
+        binlog_sig = signals.binlog_write
+        schema_sig = signals.schema_write(schema)
+        table_sig = signals.table_write(schema, table)
         row_sig = signals.row_write(schema, table)
     elif isinstance(event, UpdateRowsEvent):
-        binlog_sig = signals.binlog_update(schema, table)
-        rows_sig = signals.rows_update(schema, table)
+        binlog_sig = signals.binlog_update
+        schema_sig = signals.schema_update(schema)
+        table_sig = signals.table_update(schema, table)
         row_sig = signals.row_update(schema, table)
     elif isinstance(event, DeleteRowsEvent):
-        binlog_sig = signals.binlog_delete(schema, table)
-        rows_sig = signals.rows_delete(schema, table)
+        binlog_sig = signals.binlog_delete
+        schema_sig = signals.schema_delete(schema)
+        table_sig = signals.table_delete(schema, table)
         row_sig = signals.row_delete(schema, table)
     else:
         _logger.critical('Unknown event class "%s"' %
                          event.__class__.__name__)
         return
 
-    # send binglog signal
+    # send binlog signal
     _logger.debug('Send binlog signal "%s"' % binlog_sig.name)
-    binlog_sig.send(event)
+    binlog_sig.send(event, schema=schema, table=table)
 
-    # send rows signal
-    _logger.debug('Send rows signal "%s"' % rows_sig.name)
-    rows_sig.send(rows)
+    # send schema signal
+    _logger.debug('Send schema signal "%s"' % schema_sig.name)
+    schema_sig.send(event, schema=schema, table=table)
+
+    try:
+        rows = event.rows
+    except (UnicodeDecodeError, ValueError) as e:
+        _logger.exception(e)
+        return
+
+    # send table signal
+    _logger.debug('Send table signal "%s"' % table_sig.name)
+    table_sig.send(rows, schema=schema, table=table)
 
     # send row signals
     for row in rows:
         _logger.debug('Send row signal "%s"' % (row_sig.name))
-        row_sig.send(row)
+        row_sig.send(row, schema=schema, table=table)
 
 
 def start_publishing(mysql_dsn, **kwargs):

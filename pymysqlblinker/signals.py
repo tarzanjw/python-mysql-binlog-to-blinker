@@ -3,138 +3,58 @@ import blinker
 
 __author__ = 'tarzan'
 
-_signal_namespace = blinker.Namespace()
+_signals = blinker.Namespace()
 
-binlog_pos_signal = _signal_namespace.signal('mysql_binlog_pos')
+binlog_pos_signal = _signals.signal('mysql_binlog_pos')
 
+#################
+# WRITE SIGNALS #
+#################
 
-def _signal(action, schema, table, suffix=None):
-    """ Get the signal for *action* on *schema.table* at *suffix*
-    :rtype: blinker.NamedSignal
-
-    >>> _signal('action', 'db0', None).name
-    'action@db0'
-    >>> _signal('action', 'db1', 'tbl12').name
-    'action@db1.tbl12'
-    >>> _signal('action', 'db1', 'tbl12', 'suffix').name
-    'action@db1.tbl12#suffix'
-    >>> _signal('action', 'db', None, 'suffix')
-    Traceback (most recent call last):
-     ...
-    AssertionError: Can not provide suffix when table is empty
-    """
-    assert table or not suffix, 'Can not provide suffix when table is empty'
-    sig_name = '%s@%s' % (action, schema)
-    if table:
-        sig_name = sig_name + '.' + table
-        if suffix:
-            sig_name = sig_name + '#' + suffix
-    return _signal_namespace.signal(sig_name)
+# The signal for binlog write
+binlog_write = _signals.signal('write')
 
 
-def binlog_write(schema, table):
-    """ Get the signal for binlog write on schema.table
+def schema_write(schema):
+    """ Return the write signal on *schema*.
+        Multi calls with same args will return same signal.
     :rtype: blinker.NamedSignal
     """
-    return _signal('write', schema, table)
+    return _signals.signal('write@%s' % schema)
 
 
-def binlog_update(schema, table):
-    """ Get the signal for binlog update on schema.table
+def table_write(schema, table):
+    """ Return the write signal on *schema.table*
+        Multi calls with same args will return same signal.
     :rtype: blinker.NamedSignal
     """
-    return _signal('update', schema, table)
-
-
-def binlog_delete(schema, table):
-    """ Get the signal for binlog delete on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('delete', schema, table)
-
-
-def rows_write(schema, table):
-    """ Get the signal for rows write on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('write', schema, table, 'rows')
-
-
-def rows_update(schema, table):
-    """ Get the signal for rows update on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('update', schema, table, 'rows')
-
-
-def rows_delete(schema, table):
-    """ Get the signal for rows delete on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('delete', schema, table, 'rows')
+    return _signals.signal('write@%s.%s' % (schema, table))
 
 
 def row_write(schema, table):
-    """ Get the signal for single row write on schema.table
+    """ Return the write signal for a row on *schema.table*
+        Multi calls with same args will return same signal.
     :rtype: blinker.NamedSignal
     """
-    return _signal('write', schema, table, 'row')
+    return _signals.signal('write@%s.%s#row' % (schema, table))
 
 
-def row_update(schema, table):
-    """ Get the signal for single row update on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('update', schema, table, 'row')
+# Decorator, wrapper for binlog_write.connect
+on_binlog_write = binlog_write.connect
 
 
-def row_delete(schema, table):
-    """ Get the signal for single row delete on schema.table
-    :rtype: blinker.NamedSignal
-    """
-    return _signal('delete', schema, table, 'row')
-
-
-def on_binlog_write(schema, table):
-    """ Decorator, wrapper for binlog_write(schema, table).connect
+def on_schema_write(schema):
+    """ Decorator, wrapper for schema_write(schema, table).connect
     :return: Function as decorator
     """
-    return binlog_write(schema, table).connect
+    return schema_write(schema).connect
 
 
-def on_binlog_update(schema, table):
-    """ Decorator, wrapper for binlog_update(schema, table).connect
+def on_table_write(schema, table):
+    """ Decorator, wrapper for table_write(schema, table).connect
     :return: Function as decorator
     """
-    return binlog_update(schema, table).connect
-
-
-def on_binlog_delete(schema, table):
-    """ Decorator, wrapper for binlog_delete(schema, table).connect
-    :return: Function as decorator
-    """
-    return binlog_delete(schema, table).connect
-
-
-def on_rows_write(schema, table):
-    """ Decorator, wrapper for rows_write(schema, table).connect
-    :return: Function as decorator
-    """
-    return rows_write(schema, table).connect
-
-
-def on_rows_update(schema, table):
-    """ Decorator, wrapper for rows_update(schema, table).connect
-    :return: Function as decorator
-    """
-    return rows_update(schema, table).connect
-
-
-def on_rows_delete(schema, table):
-    """ Decorator, wrapper for rows_delete(schema, table).connect
-    :return: Function as decorator
-    """
-    return rows_delete(schema, table).connect
+    return table_write(schema, table).connect
 
 
 def on_row_write(schema, table):
@@ -144,11 +64,111 @@ def on_row_write(schema, table):
     return row_write(schema, table).connect
 
 
+#################
+# UPDATE SIGNALS #
+#################
+
+# The signal for binlog update
+binlog_update = _signals.signal('update')
+
+
+def schema_update(schema):
+    """ Return the update signal on *schema*.
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('update@%s' % schema)
+
+
+def table_update(schema, table):
+    """ Return the update signal on *schema.table*
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('update@%s.%s' % (schema, table))
+
+
+def row_update(schema, table):
+    """ Return the update signal for a row on *schema.table*
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('update@%s.%s#row' % (schema, table))
+
+
+# Decorator, wrapper for binlog_update.connect
+on_binlog_update = binlog_update.connect
+
+
+def on_schema_update(schema):
+    """ Decorator, wrapper for schema_update(schema, table).connect
+    :return: Function as decorator
+    """
+    return schema_update(schema).connect
+
+
+def on_table_update(schema, table):
+    """ Decorator, wrapper for table_update(schema, table).connect
+    :return: Function as decorator
+    """
+    return table_update(schema, table).connect
+
+
 def on_row_update(schema, table):
     """ Decorator, wrapper for row_update(schema, table).connect
     :return: Function as decorator
     """
     return row_update(schema, table).connect
+
+
+#################
+# DELETE SIGNALS #
+#################
+
+# The signal for binlog delete
+binlog_delete = _signals.signal('delete')
+
+
+def schema_delete(schema):
+    """ Return the delete signal on *schema*.
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('delete@%s' % schema)
+
+
+def table_delete(schema, table):
+    """ Return the delete signal on *schema.table*
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('delete@%s.%s' % (schema, table))
+
+
+def row_delete(schema, table):
+    """ Return the delete signal for a row on *schema.table*
+        Multi calls with same args will return same signal.
+    :rtype: blinker.NamedSignal
+    """
+    return _signals.signal('delete@%s.%s#row' % (schema, table))
+
+
+# Decorator, wrapper for binlog_delete.connect
+on_binlog_delete = binlog_delete.connect
+
+
+def on_schema_delete(schema):
+    """ Decorator, wrapper for schema_delete(schema, table).connect
+    :return: Function as decorator
+    """
+    return schema_delete(schema).connect
+
+
+def on_table_delete(schema, table):
+    """ Decorator, wrapper for table_delete(schema, table).connect
+    :return: Function as decorator
+    """
+    return table_delete(schema, table).connect
 
 
 def on_row_delete(schema, table):
