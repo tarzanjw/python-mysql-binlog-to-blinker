@@ -63,4 +63,9 @@ Suppose that you need to connect to write signal on table *db0.table1*:
         pass
 
 
-    
+Change logs
+-----------
+
+### 1.1
+
+    * Add connect_timeout argument to pub.start_publishing
