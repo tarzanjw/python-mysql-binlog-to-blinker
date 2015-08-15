@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
 import random
-from six.moves.urllib.parse import urlparse
+try:
+    # Python 3
+    from urllib.parse import urlparse, parse_qsl
+except ImportError:
+    # Python 2
+    from urlparse import urlparse, parse_qsl
 import pymysqlreplication
 from pymysqlreplication.row_event import (
     RowsEvent,
@@ -72,13 +77,16 @@ def start_publishing(mysql_dsn, **kwargs):
     The additional kwargs will be passed to `BinLogStreamReader`.
     """
     # parse mysql settings
+    _logger.info('Start publishing from %s' % mysql_dsn)
     parsed = urlparse(mysql_dsn)
     mysql_settings = {
         "host": parsed.hostname,
         "port": parsed.port or 3306,
         "user": parsed.username,
-        "passwd": parsed.password
+        "passwd": parsed.password,
+        "connect_timeout": kwargs.pop('connect_timeout', None)
     }
+    mysql_settings.update(parse_qsl(parsed.query))
     kwargs.setdefault('server_id', random.randint(1000000000, 4294967295))
     kwargs.setdefault('freeze_schema', True)
 

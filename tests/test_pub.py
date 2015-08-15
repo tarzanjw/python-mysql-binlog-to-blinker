@@ -2,8 +2,12 @@
 
 from __future__ import absolute_import
 
-import logging
-from six.moves.urllib.parse import urlparse
+try:
+    # Python 3
+    from urllib.parse import urlparse, parse_qsl
+except ImportError:
+    # Python 2
+    from urlparse import urlparse, parse_qsl
 from pymysqlreplication.row_event import \
     WriteRowsEvent, \
     UpdateRowsEvent, \
@@ -19,6 +23,7 @@ t_schemas = dict(zip(['write', 'update', 'delete'], [[], [], []]))
 t_tables = dict(zip(['write', 'update', 'delete'], [[], [], []]))
 t_rows = dict(zip(['write', 'update', 'delete'], [[], [], []]))
 t_poses = []
+
 
 def setup_module(module):
     def test_sg(sg_list):
@@ -53,8 +58,9 @@ def binlog(mysql_dsn):
         "port": parsed.port or 3306,
         "user": parsed.username,
         "passwd": parsed.password,
-        "database": "testdb"
+        "database": parsed.path.strip('/'),
     }
+    db_settings.update(parse_qsl(parsed.query))
     conn = pymysql.connect(**db_settings)
     cursor = conn.cursor()
 
@@ -76,6 +82,11 @@ def binlog(mysql_dsn):
 
     # generates signals
     pub.start_publishing(mysql_dsn)
+
+
+# def test_connection_timeout():
+#     mysql_dsn = 'mysql+pymysql://root@10.1.2.12/nodb'
+#     pub.start_publishing(mysql_dsn, connect_timeout=2)
 
 
 def test_schema_table_name(binlog):
@@ -178,81 +189,3 @@ def test_row_signal(binlog):
         {'values': {'data': 'cc', 'id': 4}},
         {'values': {'data': 'aa', 'id': 1}}
     ]
-
-#
-# def test_mysql_table_event(binlog):
-#     assert len(t_writes) == 2
-#     assert all(isinstance(e, WriteRowsEvent) for e in t_writes)
-#
-#     assert len(t_updates) == 3
-#     assert all(isinstance(e, UpdateRowsEvent) for e in t_updates)
-#
-#     assert len(t_deletes) == 2
-#     assert all(isinstance(e, DeleteRowsEvent) for e in t_deletes)
-#
-#
-# def test_mysql_table_event(binlog):
-#     assert t_table_writes == [
-#         [
-#             {'values': {'data': 'a', 'id': 1}},
-#             ],
-#         [
-#             {'values': {'data': 'b', 'id': 2}},
-#             {'values': {'data': 'c', 'id': 3}},
-#             {'values': {'data': 'd', 'id': 4}},
-#             ]
-#     ]
-#     assert t_table_updates == [
-#         [
-#             {'before_values': {'data': 'a', 'id': 1},
-#              'after_values': {'data': 'aa', 'id': 1}},
-#             ],
-#         [
-#             {'before_values': {'data': 'b', 'id': 2},
-#             'after_values': {'data': 'bb', 'id': 2}},
-#             ],
-#         [
-#             {'before_values': {'data': 'bb', 'id': 2},
-#              'after_values': {'data': 'cc', 'id': 2}},
-#             {'before_values': {'data': 'c', 'id': 3},
-#              'after_values': {'data': 'cc', 'id': 3}},
-#             {'before_values': {'data': 'd', 'id': 4},
-#              'after_values': {'data': 'cc', 'id': 4}},
-#             ],
-#     ]
-#     assert t_table_deletes == [
-#         [
-#             {'values': {'data': 'cc', 'id': 2}},
-#             {'values': {'data': 'cc', 'id': 3}},
-#             {'values': {'data': 'cc', 'id': 4}},
-#             ],
-#         [
-#             {'values': {'data': 'aa', 'id': 1}},
-#             ],
-#     ]
-#
-# def test_mysql_row_event(binlog):
-#     assert t_row_writes == [
-#         {'values': {'data': 'a', 'id': 1}},
-#         {'values': {'data': 'b', 'id': 2}},
-#         {'values': {'data': 'c', 'id': 3}},
-#         {'values': {'data': 'd', 'id': 4}},
-#     ]
-#     assert t_row_updates == [
-#         {'before_values': {'data': 'a', 'id': 1},
-#          'after_values': {'data': 'aa', 'id': 1}},
-#         {'before_values': {'data': 'b', 'id': 2},
-#          'after_values': {'data': 'bb', 'id': 2}},
-#         {'before_values': {'data': 'bb', 'id': 2},
-#          'after_values': {'data': 'cc', 'id': 2}},
-#         {'before_values': {'data': 'c', 'id': 3},
-#          'after_values': {'data': 'cc', 'id': 3}},
-#         {'before_values': {'data': 'd', 'id': 4},
-#          'after_values': {'data': 'cc', 'id': 4}},
-#     ]
-#     assert t_row_deletes == [
-#         {'values': {'data': 'cc', 'id': 2}},
-#         {'values': {'data': 'cc', 'id': 3}},
-#         {'values': {'data': 'cc', 'id': 4}},
-#         {'values': {'data': 'aa', 'id': 1}}
-#     ]

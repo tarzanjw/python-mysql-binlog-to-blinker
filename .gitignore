@@ -9,6 +9,7 @@ tests/conf.json
 [Bb]in
 [Ii]nclude
 [Ll]ib
+[Ll]ib64
 [Ss]cripts
 pyvenv.cfg
 pip-selfcheck.json
