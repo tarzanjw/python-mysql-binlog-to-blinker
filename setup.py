@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__version__ = '1.2'
+
 from setuptools import setup
 
 # requirements
@@ -15,7 +17,7 @@ dev_requires = ["pytest",
                 ] + install_requires
 
 setup(name="pymysqlblinker",
-      version=__import__("pymysqlblinker").__version__,
+      version=__version__,
       description="mysql binlog to blinker signal",
       keywords="event replication mysql signal",
       author="Hoc .T Do",
