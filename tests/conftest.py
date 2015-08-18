@@ -64,3 +64,9 @@ def mysql_dsn(conf):
     conn.close()
 
     return dsn
+
+
+@pytest.fixture(scope="class")
+def class_mysql_dsn(request, mysql_dsn):
+    # set a class attribute on the invoking test context
+    request.cls.mysql_dsn = mysql_dsn

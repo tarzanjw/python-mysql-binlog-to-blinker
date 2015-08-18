@@ -4,10 +4,9 @@ Python MySQL Replication Blinker
 Features
 --------
 
-| This package uses
+This package uses
 `mysql-replication <https://github.com/noplay/python-mysql-replication>`__
-to read
-| events from MySQL's binlog and send to blinker's signal.
+to read events from MySQL's binlog and send to blinker's signal.
 
 -  binlog action level
 -  schema level
@@ -26,9 +25,9 @@ Whenever a binlog event come, it will be dispatched into some signals:
 Signals
 -------
 
-::
+    .. code-block::
 
-    binlog event -> binlog signal -> schema signal -> table signal --> row signals
+        binlog event -> binlog signal -> schema signal -> table signal --> row signals
 
 So, suppose that an event come with schema=foo, table=bar and it updated
 2 rows. Those signal will be sent:
@@ -52,32 +51,70 @@ Connect to signals
 
 To connect to a signal, you can use the signal instance or a decorator.
 
-Suppose that you need to connect to write signal on table *db0.table1*:
+Suppose that you need to connect to write signal on table
+*db0.table1*:
 
-::
+    .. code-block:: python
 
-    from pymysqlblinker import signals
+        from pymysqlblinker import signals
 
-    tbl1_signal = signals.table_write('db0', 'table1')
+        tbl1_signal = signals.table_write('db0', 'table1')
 
-    def subscriber1(rows, schema, table):
-        pass
+        def subscriber1(rows, schema, table):
+            pass
 
-    # use connect function
-    tbl1_signal.connect(subscriber1)
+        # use connect function
+        tbl1_signal.connect(subscriber1)
 
-    # or use decorator
-    @signals.on_table_write('db0', 'table1')
-    def subscriber1(rows, schema, table):
-        pass
+        # or use decorator
+        @signals.on_table_write('db0', 'table1')
+        def subscriber1(rows, schema, table):
+            pass
+
+Signal publishing
+-----------------
+
+To start publishing signals
+
+    .. code-block:: python
+
+        from pymysqlblinker import start_publishing
+
+        start_publishing(
+            'mysql://root@localhost',
+        )
+
+Replication
+-----------
+
+This package support a method to replicate from mysql database. It
+operates by keep memory at last binlog position. By default, it save to a file.
+
+To make it, call:
+
+    .. code-block:: python
+
+        from pymysqlblinker import start_replication
+
+        start_replication(
+            'mysql://root@localhost',
+            '/path/to/file/that/remember/binlog/position',
+        )
 
 Change logs
 -----------
 
-1.1
+1.2
 ~~~
 
-::
+-  Add BinlogPosMemory to allow replication: replication is publishing
+   with
+    ability to remember last binlog position. For the first run, it will
+   start at
+    the end of current binlog.
 
-    * Add connect_timeout argument to pub.start_publishing
+1.1.1
+~~~~~
+
+-  Add connect\_timeout argument to pub.start\_publishing
 
