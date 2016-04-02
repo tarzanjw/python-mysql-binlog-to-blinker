@@ -1,0 +1,6 @@
+{
+  "mysql_settings": {
+    "host": "localhost",
+    "user": "root"
+  }
+}

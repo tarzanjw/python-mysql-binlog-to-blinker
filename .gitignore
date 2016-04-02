@@ -1,5 +1,4 @@
 ### Manually added
-tests/conf.json
 *.binlog.pos
 
 # Created by .ignore support plugin (hsz.mobi)
