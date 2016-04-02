@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-from six.moves.urllib.parse import urlparse
-# from urlparse import urlparse
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,24 +22,15 @@ def conf():
 
 
 @pytest.fixture(scope="module")
-def mysql_dsn(conf):
+def mysql_settings(conf):
     """MySQL server dsn
 
-    This fixture will init a clean meepo_test database with a 'test' table
+    This fixture will init a clean tbl0 database with a 'test' table
     """
     logger = logging.getLogger("fixture_mysql_dsn")
 
-    dsn = conf["mysql_dsn"] if conf else \
-        "mysql+pymysql://root@localhost/"
-
     # init database
-    parsed = urlparse(dsn)
-    db_settings = {
-        "host": parsed.hostname,
-        "port": parsed.port or 3306,
-        "user": parsed.username,
-        "passwd": parsed.password
-    }
+    db_settings = conf['mysql_settings']
     conn = pymysql.connect(**db_settings)
     cursor = conn.cursor()
 
@@ -63,10 +52,10 @@ def mysql_dsn(conf):
     cursor.close()
     conn.close()
 
-    return dsn
+    return db_settings
 
 
 @pytest.fixture(scope="class")
-def class_mysql_dsn(request, mysql_dsn):
+def class_mysql_settings(request, mysql_settings):
     # set a class attribute on the invoking test context
-    request.cls.mysql_dsn = mysql_dsn
+    request.cls.mysql_settings = mysql_settings

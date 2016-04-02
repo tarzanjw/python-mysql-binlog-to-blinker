@@ -104,4 +104,4 @@ def start_publishing(mysql_dsn, **kwargs):
             continue
 
         send_signals_for_event(event)
-        signals.binlog_pos_signal.send((stream.log_file, stream.log_pos))
+        signals.binlog_position_signal.send((stream.log_file, stream.log_pos))

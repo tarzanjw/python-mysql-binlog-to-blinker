@@ -1,28 +1,65 @@
 # -*- coding: utf-8 -*-
 import logging
+import os
 import sys
 import threading
-from pymysqlblinker import signals
+from mysqlbinlog2blinker import signals
 
 __author__ = 'tarzan'
 _logger = logging.getLogger(__name__)
 
 
-class BinlogPosMemory(object):
+class BaseBinlogPosMemory(object):
+    """ This class will receive binlog position signal from mysqlbinlog2blinker
+    and store it into a persistent storage.
     """
-    This class will receive binlog position signal from pymysqlblinker and store
-    it into a file.
+    def start(self):
+        """ Start listening the signal and monitoring position changing
+        """
+        raise NotImplementedError()
 
-    It will subscribe to pymysqlblinker.signals.binlog_pos_signal and store the
+    def stop(self):
+        """ Finish listening the signal and monitoring position changing
+        """
+        raise NotImplementedError()
+
+    @property
+    def log_pos(self):
+        """ Return current or last saved position """
+        raise NotImplementedError()
+
+    @property
+    def log_file(self):
+        """ Return current or last saved binlog file """
+        raise NotImplementedError()
+
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+
+class FileBasedBinlogPosMemory(BaseBinlogPosMemory):
+    """ This class store binlog position into file.
+
+    It will subscribe to mysqlbinlog2blinker.signals.binlog_pos_signal and store the
     position into memory.
+
     A thread will run and store this position into a file each interval.
     The position in file will be read the the memory start.
     """
     def __init__(self, pos_filename, interval=2):
-        """ Create instance of BinlogPosMemory
-        :param string pos_filename: position storage file
-        :param float interval: the interval in second
+        """ Create instance of FileBasedBinlogPosMemory
+
+        Args:
+            pos_filename (str|None): position storage file. None will makes
+                *mysqlbinlog2blinker.binlog.pos* at current working dir
+            interval (float): the interval in second
         """
+        if not pos_filename:
+            pos_filename = os.path.join(os.getcwd(),
+                                        'mysqlbinlog2blinker.binlog.pos')
         self.pos_storage_filename = pos_filename
         assert self.pos_storage_filename
         self.interval = interval
@@ -65,23 +102,17 @@ class BinlogPosMemory(object):
         _logger.debug('Start binlog position memory at %s'
                       % self.pos_storage_filename)
         self._read_file_and_pos()
-        signals.binlog_pos_signal.connect(self.on_binlog_pos_signal)
+        signals.binlog_position_signal.connect(self.on_binlog_pos_signal)
         self.save_log_pos_thread_stop_flag.clear()
         self.save_log_pos_thread.start()
 
     def stop(self):
-        signals.binlog_pos_signal.disconnect(self.on_binlog_pos_signal)
+        signals.binlog_position_signal.disconnect(self.on_binlog_pos_signal)
         self.save_log_pos_thread_stop_flag.set()
         _logger.debug('Finish binlog position memory at %s'
                       % self.pos_storage_filename)
         # flushing current position into file
         self._save_file_and_pos()
-
-    def __enter__(self):
-        self.start()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
 
     def _save_file_and_pos(self):
         """ Save current position into file
