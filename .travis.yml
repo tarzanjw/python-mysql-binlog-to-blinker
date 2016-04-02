@@ -1,10 +1,10 @@
 language: python
-python: 3.4
+python: 3.5
 services:
   - mysql
 env:
   - TOXENV=py27
-  - TOXENV=py34
+  - TOXENV=py35
 before_install:
   - pip install tox
 before_script:

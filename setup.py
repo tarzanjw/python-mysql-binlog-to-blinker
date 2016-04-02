@@ -240,6 +240,7 @@ setup_dict = dict(
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
     install_requires=[
+        'PyMySQL==0.6.7',
         'mysql-replication>=0.8',
         'blinker',
     ] + python_version_specific_requires,

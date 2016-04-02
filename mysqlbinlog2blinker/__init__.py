@@ -9,7 +9,6 @@ from mysqlbinlog2blinker import (
     binlog_pos_memory as _bpm,
     signals,
 )
-from .pub import start_publishing
 
 
 __author__ = 'tarzan'
