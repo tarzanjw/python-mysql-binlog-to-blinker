@@ -1,5 +1,6 @@
 ### Manually added
 tests/conf.json
+*.binlog.pos
 
 # Created by .ignore support plugin (hsz.mobi)
 ### VirtualEnv template
@@ -8,8 +9,8 @@ tests/conf.json
 .Python
 [Bb]in
 [Ii]nclude
-[Ll]ib
 [Ll]ib64
+[Ll]ib
 [Ss]cripts
 pyvenv.cfg
 pip-selfcheck.json
