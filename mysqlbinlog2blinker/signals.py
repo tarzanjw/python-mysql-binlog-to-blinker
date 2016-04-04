@@ -59,7 +59,7 @@ rows_inserted = _signals.signal(
     doc='fired on each WriteRowsEvent come, after convert data into dict',
 )
 """:type: blinker.NamedSignal"""
-on_rows_written = rows_inserted.connect
+on_rows_inserted = rows_inserted.connect
 
 # def subscriber(table_name, rows, meta)
 rows_updated = _signals.signal(

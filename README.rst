@@ -9,42 +9,28 @@ This package uses
 to read events from MySQL's binlog and send to blinker's signal.
 
 -  binlog action level
--  schema level
--  table level
--  row level
+-  rows level
 
 It will send RowsEvent only.
 
 Whenever a binlog event come, it will be dispatched into some signals:
 
+#. binlog\_position\_signal: 1 signal for the binlog current position
 #. binlog\_signal: 1 signal for the binlog event.
-#. schema\_signal: 1 signal for the event's schema
-#. table\_signal: 1 signal for the event's table.
-#. row\_signal: 1+ signals for event's rows. 1 signal per row.
+#. rows\_signal: 1 signal for event's rows. 1 signal per row.
+
 
 Signals
 -------
 
-    .. code-block::
+There are 5 signals:
 
-        binlog event -> binlog signal -> schema signal -> table signal --> row signals
+1. `binlog_position_signal`: sent whenever binlog event come to notify the
+   current position of binlog stream
+2. `binlog_signal`: sent whenever binlog event come to notify the binlog event
+3. `rows_inserted_signal`, `rows_updated_signal`, `rows_deleted_signal`: sent
+   on the event as their name
 
-So, suppose that an event come with schema=foo, table=bar and it updated
-2 rows. Those signal will be sent:
-
-+-----------------+--------------------------+------------------------------+
-| signal          | signal name              | sender                       |
-+=================+==========================+==============================+
-| binlog signal   | ``update``               | event (RowsEvent)            |
-+-----------------+--------------------------+------------------------------+
-| schema signal   | ``update@foo``           | event (RowsEvent)            |
-+-----------------+--------------------------+------------------------------+
-| table signal    | ``update@foo.bar``       | event.rows (list of array)   |
-+-----------------+--------------------------+------------------------------+
-| row signal      | ``update@foo.bar#row``   | row1 (array)                 |
-+-----------------+--------------------------+------------------------------+
-| row signal      | ``update@foo.bar#row``   | row2 object (array)          |
-+-----------------+--------------------------+------------------------------+
 
 Connect to signals
 ------------------
@@ -56,19 +42,14 @@ Suppose that you need to connect to write signal on table
 
     .. code-block:: python
 
-        from pymysqlblinker import signals
+        from mysqlbinlog2blinker import signals
 
-        tbl1_signal = signals.table_write('db0', 'table1')
-
-        def subscriber1(rows, schema, table):
+        @signal.rows_updated.connect
+        def on_rows_updated_signal(table_name, rows, meta):
             pass
 
-        # use connect function
-        tbl1_signal.connect(subscriber1)
-
-        # or use decorator
-        @signals.on_table_write('db0', 'table1')
-        def subscriber1(rows, schema, table):
+        @signal.binlog_signal.connect
+        def on_binlog_signal(event, stream):
             pass
 
 Signal publishing
@@ -81,7 +62,10 @@ To start publishing signals
         from pymysqlblinker import start_publishing
 
         start_publishing(
-            'mysql://root@localhost',
+            {
+                'host': 'localohst',
+                'user': 'root',
+            },
         )
 
 Replication
@@ -97,24 +81,17 @@ To make it, call:
         from pymysqlblinker import start_replication
 
         start_replication(
-            'mysql://root@localhost',
-            '/path/to/file/that/remember/binlog/position',
+            {
+                'host': 'localohst',
+                'user': 'root',
+            },
+            ('/path/to/file/that/remember/binlog/position', 2),
         )
 
 Change logs
 -----------
 
-1.2
+0.1
 ~~~
 
--  Add BinlogPosMemory to allow replication: replication is publishing
-   with
-    ability to remember last binlog position. For the first run, it will
-   start at
-    the end of current binlog.
-
-1.1.1
-~~~~~
-
--  Add connect\_timeout argument to pub.start\_publishing
-
+- First version
