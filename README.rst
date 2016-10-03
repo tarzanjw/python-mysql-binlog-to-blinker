@@ -1,6 +1,10 @@
 Python MySQL Replication Blinker
 ================================
 
+.. image:: https://badges.gitter.im/tarzanjw/python-mysql-binlog-to-blinker.svg
+   :alt: Join the chat at https://gitter.im/tarzanjw/python-mysql-binlog-to-blinker
+   :target: https://gitter.im/tarzanjw/python-mysql-binlog-to-blinker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 Features
 --------
 
